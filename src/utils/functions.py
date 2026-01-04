@@ -58,4 +58,3 @@ def get_title_year(file_name:str) -> tuple[str, str]:
         film_title = ''
 
     return film_title, film_year
-
