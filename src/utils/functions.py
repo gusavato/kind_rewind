@@ -44,7 +44,7 @@ def get_title_year(file_name:str) -> tuple[str, str]:
     """
     # Patrones regex
     year_regex = r"\b(19\d{2}|20\d{2})\b"
-    title_regex = r"^(.*?)(?=\()"
+    title_regex = r"^(.*?)(?=[\(\[])"
 
     try:
         film_year = re.findall(year_regex, file_name)[0]
