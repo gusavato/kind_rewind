@@ -101,12 +101,16 @@ def get_director_writer(tmdb_id):
     url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/credits?language=es-ES"
 
     response = requests.get(url, headers=headers).json()
-
-    df = pd.DataFrame(response['crew'])
-
     dictio = dict()
-    dictio['Director'] = df[df.job == 'Director']['name'].to_list()
-    dictio['Guion'] = df[df.job == 'Screenplay']['name'].to_list()
+    try:
+        df = pd.DataFrame(response['crew'])
+
+        dictio['Director'] = df[df.job == 'Director']['name'].to_list()
+        dictio['Guion'] = df[df.job == 'Screenplay']['name'].to_list()
+    except AttributeError:
+        logger.warning("No se tiene registro director / guion")
+        dictio['Director'] = ''
+        dictio['Guion'] = ''
 
     return dictio
 
