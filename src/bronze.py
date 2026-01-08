@@ -38,7 +38,7 @@ for root_path, _, file_list in os.walk(bronze_path):
 
             # Obtención datos API
             dictio = get_data(tmdb_id)
-            dictio["path"] = str(Path(root_path) / file_name)
+            dictio["bronze_path"] = str(Path(root_path) / file_name)
             dictio["bronze_date"] = datetime.now()
             films.append(dictio)
 
@@ -58,17 +58,18 @@ for root_path, _, file_list in os.walk(bronze_path):
 
 # Escritura de tabla con la información de la API
 if films:
-    pd.DataFrame(films).to_parquet(bronze_parquet, engine="pyarrow")
+    df_films = pd.DataFrame(films)
     # Bronze --> Silver
     # Archivos
-    for _, row in pd.DataFrame(films).iterrows():
-        move_file_to_silver(
+    for i, row in df_films.iterrows():
+        silver_path = move_file_to_silver(
             title=row["Titulo"],
-            source_path=row["path"],
+            source_path=row["bronze_path"],
             silver_path=silver_path
         )
+        df_films.loc[i,"silver_path"] = silver_path
         logger.info(f"BRONZE --> SILVER: {row['TMDB_id']} - {row['Titulo']}")
-
+    df_films.to_parquet(bronze_parquet, engine="pyarrow")
 # Registro de subtítulos
 if subtitles:
     pd.DataFrame(subtitles).to_parquet(bronze_srt_parquet, engine="pyarrow")
