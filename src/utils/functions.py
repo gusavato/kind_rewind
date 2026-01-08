@@ -1,5 +1,8 @@
 import re
+import unicodedata
 import logging
+import os
+import shutil
 
 class ColorFormatter(logging.Formatter):
     COLORS = {
@@ -58,3 +61,38 @@ def get_title_year(file_name:str) -> tuple[str, str]:
         film_title = ''
 
     return film_title, film_year
+
+
+def sanitize_folder_name(name: str) -> str:
+    if not name:
+        return "UNKNOWN"
+
+    # Normaliza acentos (á → a, ñ → n, etc.)
+    name = unicodedata.normalize("NFKD", name)
+    name = name.encode("ascii", "ignore").decode("ascii")
+
+    # Elimina caracteres no permitidos
+    name = re.sub(r'[<>:"/\\|?*\[\]()]', '', name)
+
+    # Espacios múltiples → uno solo
+    name = re.sub(r'\s+', ' ', name).strip()
+
+    return name
+
+def move_file_to_silver(title: str, source_path: str, silver_path: str):
+    if not os.path.isfile(source_path):
+        raise FileNotFoundError(f"No existe el archivo: {source_path}")
+
+    folder_name = sanitize_folder_name(title)
+    destination_dir = os.path.join(silver_path, folder_name)
+
+    os.makedirs(destination_dir, exist_ok=True)
+
+    destination_path = os.path.join(
+        destination_dir,
+        os.path.basename(source_path)
+    )
+
+    shutil.move(source_path, destination_path)
+
+    return destination_path
