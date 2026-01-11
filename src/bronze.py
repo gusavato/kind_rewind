@@ -2,8 +2,8 @@ import os
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-from password import (bronze_path, silver_path, bronze_parquet,
-                      bronze_untrack_parquet, bronze_srt_parquet)
+from password import (BRONZE_PATH, SILVER_PATH, BRONZE_PARQUET,
+                      BRONZE_UNTRACK_PARQUET, BRONZE_SRT_PARQUET)
 from src.utils.functions import get_title_year, get_logger, move_file_to_silver
 from src.utils.api import get_tmdb_id, get_data
 
@@ -15,7 +15,7 @@ films = []
 untrack = []
 subtitles = []
 
-for root_path, _, file_list in os.walk(bronze_path):
+for root_path, _, file_list in os.walk(BRONZE_PATH):
     for file_name in file_list:
         if file_name.lower().endswith((".mkv", ".avi")):
 
@@ -59,30 +59,34 @@ for root_path, _, file_list in os.walk(bronze_path):
 # Escritura de tabla con la información de la API
 if films:
     df_films = pd.DataFrame(films)
+    df_films.to_parquet(BRONZE_PARQUET, engine="pyarrow")
     # Bronze --> Silver
     # Archivos
     for i, row in df_films.iterrows():
-        silver_path = move_file_to_silver(
+        film_silver_folder = move_file_to_silver(
             title=row["Titulo"],
             source_path=row["bronze_path"],
-            silver_path=silver_path
+            silver_path=SILVER_PATH
         )
-        df_films.loc[i,"silver_path"] = silver_path
+        df_films.loc[i,"silver_folder"] = film_silver_folder
         logger.info(f"BRONZE --> SILVER: {row['TMDB_id']} - {row['Titulo']}")
-    df_films.to_parquet(bronze_parquet, engine="pyarrow")
+    df_films.to_parquet(BRONZE_PARQUET, engine="pyarrow")
 # Registro de subtítulos
 if subtitles:
-    pd.DataFrame(subtitles).to_parquet(bronze_srt_parquet, engine="pyarrow")
+    pd.DataFrame(subtitles).to_parquet(BRONZE_SRT_PARQUET, engine="pyarrow")
     # Bronze --> Silver
     # Subtítulos
     for _,row in pd.DataFrame(subtitles).iterrows():
         move_file_to_silver(
             title=row["Film"],
             source_path=row["Path"],
-            silver_path=silver_path
+            silver_path=SILVER_PATH
         )
     logger.info("BRONZE --> SILVER: Subtítulos")
 
 # Registro de archivos no localizados en la API
 if untrack:
-    pd.DataFrame(untrack).to_parquet(bronze_untrack_parquet, engine="pyarrow")
+    pd.DataFrame(untrack).to_parquet(BRONZE_UNTRACK_PARQUET, engine="pyarrow")
+    logger.warning("No se han movido los siguientes ficheros")
+    for f in untrack:
+        print(f['Film'])
