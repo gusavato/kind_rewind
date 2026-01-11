@@ -3,6 +3,7 @@ import unicodedata
 import logging
 import os
 import shutil
+import pandas as pd
 
 class ColorFormatter(logging.Formatter):
     COLORS = {
@@ -95,4 +96,16 @@ def move_file_to_silver(title: str, source_path: str, silver_path: str):
 
     shutil.move(source_path, destination_path)
 
-    return destination_path
+    return destination_dir
+
+def remove_acentos(text: str) -> str:
+    trans = str.maketrans("áéíóúÁÉÍÓÚ", "aeiouAEIOU")
+    return text.translate(trans)
+
+
+def create_cod_letter(df: pd.DataFrame) -> pd.DataFrame:
+    df["COD_LETTER"] = df["Titulo"].apply(lambda x: x[0].upper())
+    df["COD_LETTER"] = df["COD_LETTER"].apply(remove_acentos)
+    df["COD_LETTER"] = df["COD_LETTER"].str.replace(r"[^a-zA-Z]", "#", regex=True)
+    return df
+
