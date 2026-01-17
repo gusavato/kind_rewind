@@ -48,7 +48,7 @@ def get_title_year(file_name:str) -> tuple[str, str]:
     :return film_title: Año del film
     """
     # Patrones regex
-    year_regex = r"\b(19\d{2}|20\d{2})\b"
+    year_regex = r"\((19\d{2}|20\d{2})\)"
     title_regex = r"^(.*?)(?=[\(\[])"
 
     try:
