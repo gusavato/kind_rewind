@@ -24,7 +24,7 @@ def get_tmdb_id(title: str, year: str) -> str:
         return response['results'][0]['id']
 
     except (KeyError, TypeError, ValueError, IndexError):
-        logger.warning(f"No se ha obtenido ID para title: {title}")
+        logger.error(f"No se ha obtenido ID para: {title}")
         return ''
 
 def get_details_tmdb(tmdb_id):
@@ -42,7 +42,7 @@ def get_details_tmdb(tmdb_id):
             response['release_date'], '%Y-%m-%d').year
     except (KeyError, TypeError, ValueError):
         dictio['Year'] = 0
-    dictio['Minutos'] = response['runtime']
+    dictio['Duracion'] = response['runtime']
     dictio['Tag_Line'] = response['tagline']
     dictio['Sinopsis'] = response['overview']
     dictio['Genero'] = [gen['name'] for gen in response['genres']]
@@ -115,7 +115,7 @@ def get_director_writer(tmdb_id):
     return dictio
 
 
-def get_video(tmdb_id):
+def get_video(tmdb_id,titulo):
 
     url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/videos?language=es-ES"
 
@@ -125,7 +125,7 @@ def get_video(tmdb_id):
         video = 'https://www.youtube.com/watch?v=' + \
             response['results'][0]['key']
     except (KeyError, TypeError, ValueError, IndexError):
-        logger.warning(f"No se ha obtenido video para TMDB ID: {tmdb_id}")
+        logger.warning(f"No se ha obtenido video para: {titulo}")
         return ''
 
     return video
@@ -138,6 +138,6 @@ def get_data(tmdb_id):
 
     dictio = get_details_tmdb(tmdb_id)
     dictio['Reparto'] = get_cast(tmdb_id)['Id'].to_list()
-    dictio = {**dictio, **get_director_writer(tmdb_id), 'Video': get_video(tmdb_id)}
+    dictio = {**dictio, **get_director_writer(tmdb_id), 'Video': get_video(tmdb_id,dictio['Titulo'])}
 
     return dictio
