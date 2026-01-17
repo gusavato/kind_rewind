@@ -19,6 +19,7 @@ subtitles = []
 # Obtención de índices
 df_index = pd.read_parquet(FILMS_PARQUET, engine="pyarrow")[["ID", "COD_LETTER", "COD_INDEX"]]
 index_dict, index = get_index_films(df_index)
+tmdb_id_list = pd.read_parquet(FILMS_PARQUET, engine="pyarrow")['TMDB_id'].to_list()
 
 for root_path, _, file_list in os.walk(BRONZE_PATH):
     for file_name in file_list:
@@ -43,6 +44,18 @@ for root_path, _, file_list in os.walk(BRONZE_PATH):
 
             # Obtención datos API
             dictio = get_data(tmdb_id)
+
+            # Comprobación TMDB_id
+            if dictio['TMDB_id'] in tmdb_id_list:
+                logger.error(f"{dictio['Titulo']} ya existe en films.parquet")
+                dictio_untrack = {
+                    "File": file_name,
+                    "Path": str(Path(root_path) / file_name),
+                    "Date": datetime.now()
+                }
+                untrack.append(dictio_untrack)
+
+                continue
 
             # Ubicaciones
             dictio["bronze_path"] = str(Path(root_path) / file_name)
