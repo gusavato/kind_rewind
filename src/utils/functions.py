@@ -81,11 +81,12 @@ def sanitize_folder_name(name: str) -> str:
 
     return name
 
-def move_file_to_silver(title: str, source_path: str, silver_path: str):
+def move_file_to_silver(title: str,cod:str, source_path: str, silver_path: str):
     if not os.path.isfile(source_path):
         raise FileNotFoundError(f"No existe el archivo: {source_path}")
 
-    folder_name = sanitize_folder_name(title)
+    title_name = sanitize_folder_name(title)
+    folder_name = cod + '_' + title_name
     destination_dir = os.path.join(silver_path, folder_name)
 
     os.makedirs(destination_dir, exist_ok=True)
@@ -104,11 +105,15 @@ def remove_acentos(text: str) -> str:
     return text.translate(trans)
 
 
-def create_cod_letter(df: pd.DataFrame) -> pd.DataFrame:
-    df["COD_LETTER"] = df["Titulo"].apply(lambda x: x[0].upper())
-    df["COD_LETTER"] = df["COD_LETTER"].apply(remove_acentos)
-    df["COD_LETTER"] = df["COD_LETTER"].str.replace(r"[^a-zA-Z]", "#", regex=True)
-    return df
+def create_cod_letter(title: str) -> str:
+    if not title:
+        return "#"
+
+    cod_letter = title[0].upper()
+    cod_letter = remove_acentos(cod_letter)
+    cod_letter = re.sub(r"[^a-zA-Z]", "#", cod_letter)
+
+    return cod_letter
 
 def get_index_films(df: pd.DataFrame):
     index_dict = df.groupby("COD_LETTER").agg("COD_INDEX").max().to_dict()
@@ -117,21 +122,13 @@ def get_index_films(df: pd.DataFrame):
         index = 0
     return index_dict, index
 
-def assign_index(df:pd.DataFrame, index_dict:dict, index:int):
-    df['COD_INDEX'] = 0
-    df['ID'] = 0
+def assign_index(cod_letter: str, index_dict: dict):
 
-    for i, row in df.iterrows():
+    try:
+        cod_index = index_dict[cod_letter] + 1
+        index_dict[cod_letter] += 1
+    except KeyError:
+        cod_index = 1
+        index_dict[cod_letter] = 1
 
-        try:
-            df.loc[i, 'COD_INDEX'] = index_dict[row['COD_LETTER']] + 1
-            index_dict[row['COD_LETTER']] += 1
-            df.loc[i, 'ID'] = index + 1
-            index += 1
-        except KeyError:
-            df.loc[i, 'COD_INDEX'] = 1
-            index_dict[row['COD_LETTER']] = 1
-            df.loc[i, 'ID'] = index + 1
-            index += 1
-
-    return df
+    return cod_index, index_dict
