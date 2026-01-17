@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import pandas as pd
+import numpy as np
 
 class ColorFormatter(logging.Formatter):
     COLORS = {
@@ -109,3 +110,28 @@ def create_cod_letter(df: pd.DataFrame) -> pd.DataFrame:
     df["COD_LETTER"] = df["COD_LETTER"].str.replace(r"[^a-zA-Z]", "#", regex=True)
     return df
 
+def get_index_films(df: pd.DataFrame):
+    index_dict = df.groupby("COD_LETTER").agg("COD_INDEX").max().to_dict()
+    index = df.ID.max()
+    if index is np.nan:
+        index = 0
+    return index_dict, index
+
+def assign_index(df:pd.DataFrame, index_dict:dict, index:int):
+    df['COD_INDEX'] = 0
+    df['ID'] = 0
+
+    for i, row in df.iterrows():
+
+        try:
+            df.loc[i, 'COD_INDEX'] = index_dict[row['COD_LETTER']] + 1
+            index_dict[row['COD_LETTER']] += 1
+            df.loc[i, 'ID'] = index + 1
+            index += 1
+        except KeyError:
+            df.loc[i, 'COD_INDEX'] = 1
+            index_dict[row['COD_LETTER']] = 1
+            df.loc[i, 'ID'] = index + 1
+            index += 1
+
+    return df
