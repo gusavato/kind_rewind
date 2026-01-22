@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from unidecode import unidecode
 from password import FILMS_PARQUET, ACTORS_PARQUET
+from src.utils.visor_functions import fila, actor_row
 
 # Configuración página
 st.set_page_config(layout='wide')
@@ -25,7 +26,7 @@ select_film = films.loc[films.Titulo == select,:].iloc[0].to_dict()
 
 # Página Principal
 col_01, col_02, col_03 = st.columns(
-    spec = [0.2,0.5,0.3],
+    spec = [0.20,0.45,0.35],
     gap = 'medium',
     vertical_alignment= 'top')
 
@@ -40,10 +41,52 @@ with col_02:
         unsafe_allow_html=True)
     st.markdown(select_film["Tag_Line"])
     directors = ", ".join(select_film['Director'])
-    st.markdown(f"Director: {directors}")
+    paises = ", ".join(select_film['Pais'])
+    fila("Director:",directors)
+    fila("Año:", select_film['Year'])
+    fila("Duración:", str(select_film['Duracion']) + " min")
+    fila("Título Original:", select_film['Titulo_Original'])
+    fila("Pais", paises)
 
+with col_03:
+    st.markdown(
+        f"""
+            <h1 style='font-size: 40px;'>Reparto</h1>
+            """,
+        unsafe_allow_html=True)
+    col_031, col_032 = st.columns(2, vertical_alignment="top")
+    with col_031:
+        for actor_id in select_film['Reparto'][:4]:
+            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
+                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
+    with col_032:
+        for actor_id in select_film['Reparto'][4:8]:
+            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
+                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
 
-# st.text(select)
-# st.text(select_film['Titulo_unidecode'].to_string())
-# st.text(select_film['ID'].to_string())
-# st.text(select_film['COD'].to_string())
+st.divider()
+
+col_11, col_12 = st.columns([0.5,0.5])
+
+with col_11:
+    st.markdown(f"""
+            <h3 style='font-size: 20px; color: #f55742;'>Sinopsis</h3>
+            """,
+                unsafe_allow_html=True)
+    st.write(select_film['Sinopsis'])
+    col_111, col_112 = st.columns(2, vertical_alignment="center")
+    with col_111:
+        st.metric("TMDB rate:", f"**{select_film['TMDB_rate']}**", border=True)
+
+    with col_112:
+        st.link_button(
+            "![imdb](https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg) **IMDb**",
+            f"https://www.imdb.com/title/{select_film['IMDB_id']}/",
+            type="tertiary"
+        )
+
+with col_12:
+    try:
+        st.video(select_film['Video'],format = 'rb')
+    except:
+        pass
