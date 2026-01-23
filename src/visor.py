@@ -1,11 +1,37 @@
 import streamlit as st
 import pandas as pd
+from streamlit import session_state
 from unidecode import unidecode
 from password import FILMS_PARQUET, ACTORS_PARQUET
 from src.utils.visor_functions import fila, actor_row
 
 # Configuración página
 st.set_page_config(layout='wide')
+
+# Inicializacón de variables
+if "idx" not in st.session_state:
+    st.session_state.idx = 0
+
+# Funciones
+# Botones
+def next_movie():
+    if session_state.idx == len(film_list)-1:
+        st.session_state.idx = 0
+
+    else:
+        st.session_state.idx += 1
+    st.session_state.box = film_list[st.session_state.idx]
+
+def prev_movie():
+    if session_state.idx == 0:
+        st.session_state.idx = len(film_list)-1
+    else:
+        st.session_state.idx -= 1
+    st.session_state.box = film_list[st.session_state.idx]
+
+def sync_idx():
+    box_select = st.session_state.box
+    st.session_state.idx = film_list.index(box_select)
 
 # Cargamos df
 films = pd.read_parquet(FILMS_PARQUET, engine='pyarrow').sort_values(by=['ID'], ascending=False)
@@ -16,14 +42,19 @@ actors = pd.read_parquet(ACTORS_PARQUET, engine='pyarrow')
 actors['Nombre_unicode'] = actors.Nombre.apply(lambda x: unidecode(x))
 
 
-film_list = films.sort_values(['ID'],ascending=False)['Titulo']
+film_list = films.sort_values(['ID'],ascending=False)['Titulo'].to_list()
+
+
+
 select = st.sidebar.selectbox(
     'Título',
     options=film_list,
+    index = st.session_state.idx,
+    on_change= sync_idx,
     key='box')
 
 select_film = films.loc[films.Titulo == select,:].iloc[0].to_dict()
-
+st.sidebar.write(st.session_state.idx)
 # Página Principal
 col_01, col_02, col_03 = st.columns(
     spec = [0.20,0.45,0.35],
@@ -47,6 +78,13 @@ with col_02:
     fila("Duración:", str(select_film['Duracion']) + " min")
     fila("Título Original:", select_film['Titulo_Original'])
     fila("Pais", paises)
+
+    col_021, col_022 = st.columns(2)
+    with col_021:
+        st.button("⬅️ Anterior", on_click=prev_movie)
+
+    with col_022:
+        st.button("Siguiente ➡️", on_click=next_movie)
 
 with col_03:
     st.markdown(
