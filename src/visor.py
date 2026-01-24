@@ -57,7 +57,7 @@ select_film = films.loc[films.Titulo == select,:].iloc[0].to_dict()
 st.sidebar.write(st.session_state.idx)
 # Página Principal
 col_01, col_02, col_03 = st.columns(
-    spec = [0.20,0.45,0.35],
+    spec = [0.20,0.40,0.40],
     gap = 'medium',
     vertical_alignment= 'top')
 
@@ -65,6 +65,14 @@ with col_01:
     st.image(select_film['Poster'], width=500)
 
 with col_02:
+    col_021, col_022, col_023 = st.columns([0.3,0.3,0.4],
+                                           vertical_alignment="center")
+    with col_021:
+        st.button("⬅️ Anterior", on_click=prev_movie)
+
+    with col_022:
+        st.button("Siguiente ➡️", on_click=next_movie)
+
     st.markdown(
         f"""
         <h1 style='font-size: 50px; color: #b82c16;'>{st.session_state.box}</h1>
@@ -79,49 +87,49 @@ with col_02:
     fila("Título Original:", select_film['Titulo_Original'])
     fila("Pais", paises)
 
-    col_021, col_022 = st.columns(2)
-    with col_021:
-        st.button("⬅️ Anterior", on_click=prev_movie)
-
-    with col_022:
-        st.button("Siguiente ➡️", on_click=next_movie)
-
 with col_03:
-    st.markdown(
-        f"""
-            <h1 style='font-size: 40px;'>Reparto</h1>
-            """,
-        unsafe_allow_html=True)
-    col_031, col_032 = st.columns(2, vertical_alignment="top")
-    with col_031:
-        for actor_id in select_film['Reparto'][:4]:
-            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
-                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
-    with col_032:
-        for actor_id in select_film['Reparto'][4:8]:
-            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
-                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
+    st.markdown(f"""
+                <h3 style='font-size: 25px; color: #f55742;'>Sinopsis</h3>
+                """,
+                unsafe_allow_html=True)
+
+    st.markdown(f"""
+                <div style='font-size: 18px; '>{select_film['Sinopsis']}</div>
+                """,
+                unsafe_allow_html=True)
+    col_111, col_112, col_113 = st.columns(3, vertical_alignment="center")
+    with col_111:
+        st.metric("TMDB rate:", f"**{select_film['TMDB_rate']}**", border=True)
+
+    with col_112:
+        st.metric(label="COD", value=f"**{select_film['COD']}**", border=True)
+    with col_113:
+        st.link_button(
+            "![imdb](https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg) **IMDb**",
+            f"https://www.imdb.com/title/{select_film['IMDB_id']}/",
+            type="tertiary"
+        )
+
 
 st.divider()
 
 col_11, col_12 = st.columns([0.5,0.5])
 
 with col_11:
-    st.markdown(f"""
-            <h3 style='font-size: 20px; color: #f55742;'>Sinopsis</h3>
+    st.markdown(
+        f"""
+            <h1 style='font-size: 40px;'>Reparto</h1>
             """,
-                unsafe_allow_html=True)
-    st.write(select_film['Sinopsis'])
-    col_111, col_112 = st.columns(2, vertical_alignment="center")
+        unsafe_allow_html=True)
+    col_111, col_112 = st.columns(2, vertical_alignment="top")
     with col_111:
-        st.metric("TMDB rate:", f"**{select_film['TMDB_rate']}**", border=True)
-
+        for actor_id in select_film['Reparto'][:4]:
+            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
+                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
     with col_112:
-        st.link_button(
-            "![imdb](https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg) **IMDb**",
-            f"https://www.imdb.com/title/{select_film['IMDB_id']}/",
-            type="tertiary"
-        )
+        for actor_id in select_film['Reparto'][4:8]:
+            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
+                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
 
 with col_12:
     try:
