@@ -1,44 +1,11 @@
 import re
 import unicodedata
-import logging
 import os
 import shutil
 import pandas as pd
 import numpy as np
-
-class ColorFormatter(logging.Formatter):
-    COLORS = {
-        logging.DEBUG: "\033[36m",    # Cyan
-        logging.INFO: "\033[32m",     # Verde
-        logging.WARNING: "\033[33m",  # Amarillo
-        logging.ERROR: "\033[31m",    # Rojo
-        logging.CRITICAL: "\033[41m", # Fondo rojo
-    }
-    RESET = "\033[0m"
-
-    def format(self, record):
-        color = self.COLORS.get(record.levelno, "")
-        message = super().format(record)
-        return f"{color}{message}{self.RESET}"
-
-def get_logger(name: str) -> logging.Logger:
-    logger = logging.getLogger(name)
-
-    if not logger.handlers:
-        logger.setLevel(logging.INFO)
-
-        handler = logging.StreamHandler()
-
-        formatter = ColorFormatter(
-            "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-        )
-        handler.setFormatter(formatter)
-
-        logger.addHandler(handler)
-
-    return logger
-
-
+from password import FILMS_PARQUET
+from src.utils.api import get_data
 
 def get_title_year(file_name:str) -> tuple[str, str]:
     """
@@ -132,3 +99,26 @@ def assign_index(cod_letter: str, index_dict: dict):
         index_dict[cod_letter] = 1
 
     return cod_index, index_dict
+
+def update_film(cod: str, tmdb_id: int, logger):
+    films = pd.read_parquet(FILMS_PARQUET, engine="pyarrow")
+    old_folder = films[films['COD']==cod]['folder'].iloc[0]
+    dictio = get_data(tmdb_id)
+    cod_letter = create_cod_letter(dictio["Titulo"])
+    if cod_letter != films[films['COD']==cod]['COD_LETTER'].iloc[0]:
+        logger.error("COD_LETTER no coincide. No se procede a la actualización")
+        logger.info(f"COD a actualizar {cod} vs COD_LETTER update {cod_letter}")
+        return None
+    logger.info(f"Se va a actualizar {films[films['COD']==cod]['Titulo'].iloc[0]} por {dictio['Titulo']}")
+    mask = films["COD"] == cod
+    films.loc[mask, dictio.keys()] = pd.DataFrame([dictio], index=films.index[mask])
+    films.loc[mask, "folder"] = (
+            films["COD_LETTER"]
+            + films["COD_INDEX"].astype("string").str.zfill(4)
+            + "_"
+            + films["Titulo"]
+    )
+    films.to_parquet(FILMS_PARQUET, engine="pyarrow")
+    logger.info("Actualizado FILMS_PARQUET")
+    logger.info(f"Actualizar nombre de carpeta {old_folder} por {films[films['COD']==cod]['folder'].iloc[0]}")
+    return None
