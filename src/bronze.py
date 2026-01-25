@@ -5,7 +5,7 @@ from pathlib import Path
 from password import (BRONZE_PATH, GOLD_PATH, BRONZE_PARQUET,
                       BRONZE_UNTRACK_PARQUET, BRONZE_SRT_PARQUET, FILMS_PARQUET, STORAGE)
 from src.utils.functions import get_title_year, move_file_to_silver, create_cod_letter, get_index_films, \
-    assign_index
+    assign_index, first_missing_id
 from src.utils.api import get_tmdb_id, get_data
 from src.utils.logger import get_logger
 
@@ -65,8 +65,8 @@ for root_path, _, file_list in os.walk(BRONZE_PATH):
             # Generación de índices
             dictio["COD_LETTER"] = create_cod_letter(dictio['Titulo'])
             dictio["COD_INDEX"], index_dict = assign_index(dictio["COD_LETTER"], index_dict)
-            dictio['ID'] = index + 1
-            index += 1
+            dictio['ID'] = first_missing_id(index)
+            index.append(first_missing_id(index))
             dictio["COD"] = dictio['COD_LETTER'] + str(dictio['COD_INDEX']).zfill(4)
 
             # Agregamos a films

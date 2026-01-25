@@ -3,7 +3,6 @@ import unicodedata
 import os
 import shutil
 import pandas as pd
-import numpy as np
 from password import FILMS_PARQUET
 from src.utils.api import get_data
 
@@ -82,21 +81,27 @@ def create_cod_letter(title: str) -> str:
 
     return cod_letter
 
+def first_missing_id(s):
+    s = set(s)
+    i = 1
+    while i in s:
+        i += 1
+    return i
+
 def get_index_films(df: pd.DataFrame):
-    index_dict = df.groupby("COD_LETTER").agg("COD_INDEX").max().to_dict()
-    index = df.ID.max()
-    if index is np.nan:
-        index = 0
+    index_dict = \
+    df.groupby("COD_LETTER")["COD_INDEX"].apply(list).to_dict()
+    index = df['ID'].to_list()
     return index_dict, index
 
 def assign_index(cod_letter: str, index_dict: dict):
 
     try:
-        cod_index = index_dict[cod_letter] + 1
-        index_dict[cod_letter] += 1
+        cod_index = first_missing_id(index_dict[cod_letter])
+        index_dict[cod_letter].append(cod_index)
     except KeyError:
         cod_index = 1
-        index_dict[cod_letter] = 1
+        index_dict[cod_letter] = [1]
 
     return cod_index, index_dict
 
