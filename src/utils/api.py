@@ -3,14 +3,13 @@ from datetime import datetime
 from password import TOKEN
 import pandas as pd
 from pathlib import Path
-from src.utils.functions import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 headers = {"accept": "application/json", "Authorization": f"Bearer {TOKEN}"}
 base_path = Path(__file__).resolve().parent
 path_actors = base_path / r"../../data/actors.parquet"
-
 
 def get_tmdb_id(title: str, year: str) -> str:
     """Función que devuelve el identificador de TMDB para un título"""
