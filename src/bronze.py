@@ -4,9 +4,10 @@ from datetime import datetime
 from pathlib import Path
 from password import (BRONZE_PATH, GOLD_PATH, BRONZE_PARQUET,
                       BRONZE_UNTRACK_PARQUET, BRONZE_SRT_PARQUET, FILMS_PARQUET, STORAGE)
-from src.utils.functions import get_title_year, get_logger, move_file_to_silver, create_cod_letter, get_index_films, \
+from src.utils.functions import get_title_year, move_file_to_silver, create_cod_letter, get_index_films, \
     assign_index
 from src.utils.api import get_tmdb_id, get_data
+from src.utils.logger import get_logger
 
 # Inicio logger
 logger = get_logger(__name__)
