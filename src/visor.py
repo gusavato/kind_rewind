@@ -8,7 +8,7 @@ from src.utils.visor_functions import fila, actor_row
 # Configuración página
 st.set_page_config(layout='wide')
 
-# Inicializacón de variables
+# Inicialización de variables
 if "idx" not in st.session_state:
     st.session_state.idx = 0
 
@@ -49,7 +49,6 @@ film_list = films.sort_values(['ID'],ascending=False)['Titulo'].to_list()
 select = st.sidebar.selectbox(
     'Título',
     options=film_list,
-    index = st.session_state.idx,
     on_change= sync_idx,
     key='box')
 
@@ -81,11 +80,13 @@ with col_02:
     st.markdown(select_film["Tag_Line"])
     directors = ", ".join(select_film['Director'])
     paises = ", ".join(select_film['Pais'])
+    generos = ", ".join(select_film['Genero'])
     fila("Director:",directors)
     fila("Año:", select_film['Year'])
     fila("Duración:", str(select_film['Duracion']) + " min")
     fila("Título Original:", select_film['Titulo_Original'])
     fila("Pais", paises)
+    fila("Género",generos)
 
 with col_03:
     st.markdown(f"""
