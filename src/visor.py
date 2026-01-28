@@ -5,35 +5,32 @@ from unidecode import unidecode
 from password import FILMS_PARQUET, ACTORS_PARQUET
 from src.utils.visor_functions import fila, actor_row
 
-# Configuración página
-st.set_page_config(layout='wide')
-
-# Inicialización de variables
-if "idx" not in st.session_state:
-    st.session_state.idx = 0
-
 # Funciones
 # Botones
-def next_movie():
-    if session_state.idx == len(film_list)-1:
+def next_movie(f_list):
+    if session_state.idx == len(f_list)-1:
         st.session_state.idx = 0
 
     else:
         st.session_state.idx += 1
-    st.session_state.box = film_list[st.session_state.idx]
+    st.session_state.box = f_list[st.session_state.idx]
 
-def prev_movie():
+def prev_movie(f_list):
     if session_state.idx == 0:
-        st.session_state.idx = len(film_list)-1
+        st.session_state.idx = len(f_list)-1
     else:
         st.session_state.idx -= 1
-    st.session_state.box = film_list[st.session_state.idx]
+    st.session_state.box = f_list[st.session_state.idx]
 
-def sync_idx():
+# Sincronización índices
+def sync_idx(f_list):
     box_select = st.session_state.box
-    st.session_state.idx = film_list.index(box_select)
+    st.session_state.idx = f_list.index(box_select)
 
-# Cargamos df
+# Configuración página
+st.set_page_config(layout='wide')
+
+# Carga de dataframe
 films = pd.read_parquet(FILMS_PARQUET, engine='pyarrow').sort_values(by=['ID'], ascending=False)
 films['Titulo_unidecode'] = films.Titulo.apply(lambda x: unidecode(x))
 films['Director_unidecode'] = films.Director.apply(
@@ -41,19 +38,45 @@ films['Director_unidecode'] = films.Director.apply(
 actors = pd.read_parquet(ACTORS_PARQUET, engine='pyarrow')
 actors['Nombre_unicode'] = actors.Nombre.apply(lambda x: unidecode(x))
 
+# Sidebar
+box_placeholder = st.sidebar.empty()
+genero_placeholder = st.sidebar.empty()
 
-film_list = films.sort_values(['ID'],ascending=False)['Titulo'].to_list()
+with genero_placeholder:
+    st.sidebar.multiselect(
+        'Género',
+        options=films.Genero.explode().sort_values().unique(),
+        key='genero')
 
+# Filtrado dataframe
+films_filtrado = films.copy()
 
+if st.session_state.genero:
+    films_filtrado = films_filtrado[
+        films_filtrado['Genero'].apply(
+            lambda lista: any(g in lista for g in st.session_state.genero)
+        )
+    ]
 
-select = st.sidebar.selectbox(
-    'Título',
-    options=film_list,
+film_list = films_filtrado.sort_values("ID", ascending = False)['Titulo'].to_list()
+
+# Inicialización de variables de sesión
+st.session_state.setdefault('idx', 0)
+if st.session_state.idx >= len(film_list):
+    st.session_state.idx = 0
+
+# Actualizar selectbox titulo
+select = box_placeholder.selectbox(
+    "Titulo",
+    options = film_list,
     on_change= sync_idx,
-    key='box')
+    key = 'box',
+    args= (film_list,)
+)
 
 select_film = films.loc[films.Titulo == select,:].iloc[0].to_dict()
-st.sidebar.write(st.session_state.idx)
+st.sidebar.write(select_film['ID'])
+
 # Página Principal
 col_01, col_02, col_03 = st.columns(
     spec = [0.20,0.40,0.40],
@@ -67,10 +90,10 @@ with col_02:
     col_021, col_022, col_023 = st.columns([0.3,0.3,0.4],
                                            vertical_alignment="center")
     with col_021:
-        st.button("⬅️ Anterior", on_click=prev_movie)
+        st.button("⬅️ Anterior", on_click=prev_movie, args=(film_list,))
 
     with col_022:
-        st.button("Siguiente ➡️", on_click=next_movie)
+        st.button("Siguiente ➡️", on_click=next_movie, args=(film_list,))
 
     st.markdown(
         f"""
