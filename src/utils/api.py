@@ -136,7 +136,10 @@ def get_data(tmdb_id):
     """
 
     dictio = get_details_tmdb(tmdb_id)
-    dictio['Reparto'] = get_cast(tmdb_id)['Id'].to_list()
+    try:
+        dictio['Reparto'] = get_cast(tmdb_id)['Id'].to_list()
+    except (KeyError, TypeError, ValueError):
+        dictio['Reparto'] = []
     dictio = {**dictio, **get_director_writer(tmdb_id), 'Video': get_video(tmdb_id,dictio['Titulo'])}
 
     return dictio
