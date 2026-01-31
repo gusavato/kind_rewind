@@ -3,7 +3,7 @@ import pandas as pd
 from streamlit import session_state
 from unidecode import unidecode
 from pathlib import Path
-from src.utils.visor_functions import fila, actor_row
+
 
 # CONSTANTES
 ROOT = Path.cwd()
@@ -31,6 +31,58 @@ def prev_movie(f_list):
 def sync_idx(f_list):
     box_select = st.session_state.box
     st.session_state.idx = f_list.index(box_select)
+
+# Funciones fila
+
+def fila(label, value):
+    st.markdown(
+        f"""
+        <div style="
+            display:grid;
+            grid-template-columns: 160px auto;
+            align-items:baseline;
+            margin-bottom:6px;
+        ">
+            <span style="font-size:20px; font-weight:600;">
+                {label}
+            </span>
+            <span style="font-size:20px; color:#b82c16;">
+                {value}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+def actor_row(img_url, actor_name):
+    st.markdown(
+        f"""
+        <div style="
+            display:grid;
+            grid-template-columns: 70px auto;
+            align-items:center;
+            gap:14px;
+            margin-bottom:10px;
+            padding:8px;
+            border-radius:10px;
+        ">
+            <img src="{img_url}"
+                 style="
+                    width:60px;
+                    height:60px;
+                    object-fit:cover;
+                    border-radius:50%;
+                 " />
+            <span style="
+                font-size:20px;
+                font-weight:600;
+            ">
+                {actor_name}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # Configuración página
 st.set_page_config(layout='wide')
