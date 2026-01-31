@@ -2,8 +2,13 @@ import streamlit as st
 import pandas as pd
 from streamlit import session_state
 from unidecode import unidecode
-from password import FILMS_PARQUET, ACTORS_PARQUET
+from pathlib import Path
 from src.utils.visor_functions import fila, actor_row
+
+# CONSTANTES
+ROOT = Path.cwd()
+FILMS_PARQUET = ROOT / "data" / "films.parquet"
+ACTORS_PARQUET = ROOT / "data" / "actors.parquet"
 
 # Funciones
 # Botones
