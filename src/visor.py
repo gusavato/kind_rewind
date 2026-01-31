@@ -48,6 +48,11 @@ with genero_placeholder:
         options=films.Genero.explode().sort_values().unique(),
         key='genero')
 
+with st.sidebar.expander('Mas filtros', expanded=True):
+    nota = st.slider(label='Valoración', min_value=0,
+                     max_value=10, key='nota',
+                     value=[0, 10])
+
 # Filtrado dataframe
 films_filtrado = films.copy()
 
