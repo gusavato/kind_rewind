@@ -185,10 +185,10 @@ with col_03:
                 unsafe_allow_html=True)
     col_111, col_112, col_113 = st.columns(3, vertical_alignment="center")
     with col_111:
-        st.metric("TMDB rate:", f"**{select_film['TMDB_rate']}**", border=True)
+        st.metric("TMDB rate:", f"{select_film['TMDB_rate']}", border=True)
 
     with col_112:
-        st.metric(label="COD", value=f"**{select_film['COD']}**", border=True)
+        st.metric(label="COD", value=f"{select_film['COD']}", border=True)
     with col_113:
         st.link_button(
             "![imdb](https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg) **IMDb**",
