@@ -120,6 +120,27 @@ films['Director_unidecode'] = films.Director.apply(
 actors = pd.read_parquet(ACTORS_PARQUET, engine='pyarrow')
 actors['Nombre_unicode'] = actors.Nombre.apply(lambda x: unidecode(x))
 
+# incialización session_state
+st.session_state.setdefault(
+    'duracion',
+    (films.Duracion.min(), films.Duracion.max())
+)
+
+st.session_state.setdefault(
+    'nota',
+    (0, 10)
+)
+
+st.session_state.setdefault(
+    'slider',
+    (films.Year.min(), films.Year.max())
+)
+
+st.session_state.setdefault('genero', [])
+st.session_state.setdefault('search', "")
+st.session_state.setdefault('search_select', "Titulo")
+st.session_state.setdefault('idx', 0)
+
 # Sidebar
 warning_placeholder = st.sidebar.empty()
 box_placeholder = st.sidebar.empty()
@@ -141,12 +162,10 @@ with st.sidebar.expander('Mas filtros', expanded=True):
               max_value=10, key='nota')
 
     st.slider(label='Año', min_value=films.Year.min(),
-              max_value=films.Year.max(), key='slider',
-              value=[films.Year.min(), films.Year.max()])
+              max_value=films.Year.max(), key='slider')
 
     st.slider(label='Duración', min_value=films.Duracion.min(),
-              max_value=films.Duracion.max(), key='duracion',
-              value=[films.Duracion.min(), films.Duracion.max()])
+              max_value=films.Duracion.max(), key='duracion')
 
 # Filtrado dataframe
 films_filtrado = films.copy()
@@ -196,7 +215,7 @@ if films_filtrado.empty:
 film_list = films_filtrado.sort_values("ID", ascending=False)['Titulo'].to_list()
 
 # Inicialización de variables de sesión
-st.session_state.setdefault('idx', 0)
+# st.session_state.setdefault('idx', 0)
 if st.session_state.idx >= len(film_list):
     st.session_state.idx = 0
 
