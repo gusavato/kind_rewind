@@ -3,8 +3,10 @@ import unicodedata
 import os
 import shutil
 import pandas as pd
+import numpy as np
 from password import FILMS_PARQUET
 from src.utils.api import get_data
+from datetime import datetime
 
 def get_title_year(file_name:str) -> tuple[str, str]:
     """
@@ -127,3 +129,32 @@ def update_film(cod: str, tmdb_id: int, logger):
     logger.info("Actualizado FILMS_PARQUET")
     logger.info(f"Actualizar nombre de carpeta {old_folder} por {films[films['COD']==cod]['folder'].iloc[0]}")
     return None
+
+def add_dvd(dvd_list:list, logger) -> None:
+    dvd_films = []
+    films_local = pd.read_parquet(FILMS_PARQUET, engine="pyarrow")
+    tmdb_id_list = films_local['TMDB_id'].to_list()
+    df_index_local = films_local[["ID", "COD_LETTER", "COD_INDEX"]]
+    _ , index_local = get_index_films(df_index_local)
+    for tmdb_id_local in dvd_list:
+        dictio_local = get_data(tmdb_id_local)
+        if tmdb_id_local in tmdb_id_list:
+            logger.warning(f"{tmdb_id_local} - {dictio_local['Titulo']} ya en BBDD")
+            logger.warning(f"No se procede a su inclusión")
+            continue
+        dictio_local["folder"] = ''
+        dictio_local["add_date"] = datetime.today().date()
+        dictio_local["COD_LETTER"] = ''
+        dictio_local["COD_INDEX"] = np.nan
+        dictio_local['COD'] = "DVD/B-RAY"
+        dictio_local['Vista'] = False
+        dictio_local['Storage'] = "Zuzones"
+        dictio_local['ID'] = first_missing_id(index_local)
+        index_local.append(first_missing_id(index_local))
+        dvd_films.append(dictio_local)
+        logger.info(f"{dictio_local['Titulo']} Procesada")
+
+    if dvd_films:
+        df_dvd = pd.DataFrame(dvd_films)[films_local.columns]
+        films_local = pd.concat([films_local,df_dvd],ignore_index=True)
+        films_local.to_parquet(FILMS_PARQUET, engine="pyarrow")
