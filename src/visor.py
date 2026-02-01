@@ -4,33 +4,36 @@ from streamlit import session_state
 from unidecode import unidecode
 from pathlib import Path
 
-
 # CONSTANTES
 ROOT = Path.cwd()
 FILMS_PARQUET = ROOT / "data" / "films.parquet"
 ACTORS_PARQUET = ROOT / "data" / "actors.parquet"
 
+
 # Funciones
 # Botones
 def next_movie(f_list):
-    if session_state.idx == len(f_list)-1:
+    if session_state.idx == len(f_list) - 1:
         st.session_state.idx = 0
 
     else:
         st.session_state.idx += 1
     st.session_state.box = f_list[st.session_state.idx]
 
+
 def prev_movie(f_list):
     if session_state.idx == 0:
-        st.session_state.idx = len(f_list)-1
+        st.session_state.idx = len(f_list) - 1
     else:
         st.session_state.idx -= 1
     st.session_state.box = f_list[st.session_state.idx]
+
 
 # Sincronización índices
 def sync_idx(f_list):
     box_select = st.session_state.box
     st.session_state.idx = f_list.index(box_select)
+
 
 # Funciones fila
 
@@ -53,6 +56,7 @@ def fila(label, value):
         """,
         unsafe_allow_html=True
     )
+
 
 def actor_row(img_url, actor_name):
     st.markdown(
@@ -84,6 +88,7 @@ def actor_row(img_url, actor_name):
         unsafe_allow_html=True
     )
 
+
 # Configuración página
 st.set_page_config(layout='wide')
 
@@ -107,26 +112,46 @@ with genero_placeholder:
         key='genero')
 
 with st.sidebar.expander('Mas filtros', expanded=True):
-    nota = st.slider(label='Valoración', min_value=0,
-                     max_value=10, key='nota',
-                     value=[0, 10])
+    st.slider(label='Valoración', min_value=0,
+              max_value=10, key='nota',
+              value=[0, 10])
+
+    st.slider(label='Año', min_value=films.Year.min(),
+              max_value=films.Year.max(), key='slider',
+              value=[films.Year.min(), films.Year.max()])
+
+    st.slider(label='Duración', min_value=films.Duracion.min(),
+              max_value=films.Duracion.max(), key='duracion',
+              value=[films.Duracion.min(), films.Duracion.max()])
 
 # Filtrado dataframe
 films_filtrado = films.copy()
 
 if st.session_state.genero:
     films_filtrado = films_filtrado[
-        films_filtrado['Genero'].apply(
+        (films_filtrado['Genero']
+        .apply(
             lambda lista: any(g in lista for g in st.session_state.genero)
+        )
         )
     ]
 
+# Filtros
+min_dur, max_dur = st.session_state.duracion
+min_nota, max_nota = st.session_state.nota
+min_year, max_year = st.session_state.slider
+
+films_filtrado = films_filtrado[
+    films_filtrado['Duracion'].between(min_dur, max_dur)
+    & films_filtrado['TMDB_rate'].between(min_nota, max_nota)
+    & films_filtrado['Year'].between(min_year, max_year)
+]
+
 if films_filtrado.empty:
     films_filtrado = films.copy()
-    warning_placeholder.write("No hay películas con los filtros seleccionados")
+    warning_placeholder.write("❌ No hay películas con los filtros seleccionados")
 
-
-film_list = films_filtrado.sort_values("ID", ascending = False)['Titulo'].to_list()
+film_list = films_filtrado.sort_values("ID", ascending=False)['Titulo'].to_list()
 
 # Inicialización de variables de sesión
 st.session_state.setdefault('idx', 0)
@@ -136,26 +161,26 @@ if st.session_state.idx >= len(film_list):
 # Actualizar selectbox titulo
 select = box_placeholder.selectbox(
     "Titulo",
-    options = film_list,
-    on_change= sync_idx,
-    key = 'box',
-    args= (film_list,)
+    options=film_list,
+    on_change=sync_idx,
+    key='box',
+    args=(film_list,)
 )
 
-select_film = films.loc[films.Titulo == select,:].iloc[0].to_dict()
-st.sidebar.write(select_film['ID'])
+select_film = films.loc[films.Titulo == select, :].iloc[0].to_dict()
+st.sidebar.write(f"{films_filtrado.shape[0]} películas")
 
 # Página Principal
 col_01, col_02, col_03 = st.columns(
-    spec = [0.20,0.40,0.40],
-    gap = 'medium',
-    vertical_alignment= 'top')
+    spec=[0.20, 0.40, 0.40],
+    gap='medium',
+    vertical_alignment='top')
 
 with col_01:
     st.image(select_film['Poster'], width=500)
 
 with col_02:
-    col_021, col_022, col_023 = st.columns([0.3,0.3,0.4],
+    col_021, col_022, col_023 = st.columns([0.3, 0.3, 0.4],
                                            vertical_alignment="center")
     with col_021:
         st.button("⬅️ Anterior", on_click=prev_movie, args=(film_list,))
@@ -172,12 +197,12 @@ with col_02:
     directors = ", ".join(select_film['Director'])
     paises = ", ".join(select_film['Pais'])
     generos = ", ".join(select_film['Genero'])
-    fila("Director:",directors)
+    fila("Director:", directors)
     fila("Año:", select_film['Year'])
     fila("Duración:", str(select_film['Duracion']) + " min")
     fila("Título Original:", select_film['Titulo_Original'])
     fila("Pais", paises)
-    fila("Género",generos)
+    fila("Género", generos)
 
 with col_03:
     st.markdown(f"""
@@ -202,10 +227,9 @@ with col_03:
             type="tertiary"
         )
 
-
 st.divider()
 
-col_11, col_12 = st.columns([0.5,0.5])
+col_11, col_12 = st.columns([0.5, 0.5])
 
 with col_11:
     st.markdown(
@@ -216,15 +240,15 @@ with col_11:
     col_111, col_112 = st.columns(2, vertical_alignment="top")
     with col_111:
         for actor_id in select_film['Reparto'][:4]:
-            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
-                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
+            actor_row(actors.loc[actors.Id == actor_id, "Foto"].values[0],
+                      actors.loc[actors.Id == actor_id, "Nombre"].values[0])
     with col_112:
         for actor_id in select_film['Reparto'][4:8]:
-            actor_row(actors.loc[actors.Id == actor_id,"Foto"].values[0],
-                      actors.loc[actors.Id == actor_id,"Nombre"].values[0])
+            actor_row(actors.loc[actors.Id == actor_id, "Foto"].values[0],
+                      actors.loc[actors.Id == actor_id, "Nombre"].values[0])
 
 with col_12:
     try:
-        st.video(select_film['Video'],format = 'rb')
+        st.video(select_film['Video'], format='rb')
     except:
         pass
