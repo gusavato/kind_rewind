@@ -96,6 +96,7 @@ actors = pd.read_parquet(ACTORS_PARQUET, engine='pyarrow')
 actors['Nombre_unicode'] = actors.Nombre.apply(lambda x: unidecode(x))
 
 # Sidebar
+warning_placeholder = st.sidebar.empty()
 box_placeholder = st.sidebar.empty()
 genero_placeholder = st.sidebar.empty()
 
@@ -119,6 +120,11 @@ if st.session_state.genero:
             lambda lista: any(g in lista for g in st.session_state.genero)
         )
     ]
+
+if films_filtrado.empty:
+    films_filtrado = films.copy()
+    warning_placeholder.write("No hay películas con los filtros seleccionados")
+
 
 film_list = films_filtrado.sort_values("ID", ascending = False)['Titulo'].to_list()
 
