@@ -88,6 +88,26 @@ def actor_row(img_url, actor_name):
         unsafe_allow_html=True
     )
 
+# Resetear filtros
+def reset_filtros(f_list):
+    st.session_state.genero = []
+    st.session_state.search = ""
+    st.session_state.search_select = "Titulo"
+
+    st.session_state.duracion = (
+        f_list.Duracion.min(),
+        f_list.Duracion.max()
+    )
+    st.session_state.nota = (
+        0,
+        10
+    )
+    st.session_state.slider = (
+        f_list.Year.min(),
+        f_list.Year.max()
+    )
+
+    st.session_state.idx = 0
 
 # Configuración página
 st.set_page_config(layout='wide')
@@ -111,10 +131,14 @@ with genero_placeholder:
         options=films.Genero.explode().sort_values().unique(),
         key='genero')
 
+st.sidebar.text_input('Búsqueda', key='search')
+st.sidebar.radio(label='Opción', horizontal=True, options=[
+    'Titulo', 'Reparto', 'Director'],
+                 key='search_select')
+
 with st.sidebar.expander('Mas filtros', expanded=True):
     st.slider(label='Valoración', min_value=0,
-              max_value=10, key='nota',
-              value=[0, 10])
+              max_value=10, key='nota')
 
     st.slider(label='Año', min_value=films.Year.min(),
               max_value=films.Year.max(), key='slider',
@@ -136,7 +160,7 @@ if st.session_state.genero:
         )
     ]
 
-# Filtros
+# Filtros expander
 min_dur, max_dur = st.session_state.duracion
 min_nota, max_nota = st.session_state.nota
 min_year, max_year = st.session_state.slider
@@ -146,6 +170,24 @@ films_filtrado = films_filtrado[
     & films_filtrado['TMDB_rate'].between(min_nota, max_nota)
     & films_filtrado['Year'].between(min_year, max_year)
 ]
+
+# Filtros search
+if session_state.search != '':
+    if session_state.search_select == 'Titulo':
+        films_filtrado = films_filtrado[
+            (films_filtrado['Titulo_unidecode'].str.lower().str.contains(session_state.search.lower()))
+        ]
+    elif  session_state.search_select == 'Director':
+        films_filtrado = films_filtrado[
+            (films['Director_unidecode'].apply(lambda x: any(session_state.search.lower() in i for i in x)))
+        ]
+    elif session_state.search_select == 'Reparto':
+        id_actor = actors[
+            actors.Nombre_unicode.str.lower().str.contains(session_state.search.lower())]['Id'].to_list()
+
+        films_filtrado = films_filtrado[
+            (films_filtrado['Reparto'].apply(lambda x: any(item in id_actor for item in x)))
+        ]
 
 if films_filtrado.empty:
     films_filtrado = films.copy()
@@ -168,6 +210,7 @@ select = box_placeholder.selectbox(
 )
 
 select_film = films.loc[films.Titulo == select, :].iloc[0].to_dict()
+st.sidebar.button("🎛️ Inicializar filtros", on_click= reset_filtros, args=(films,))
 st.sidebar.write(f"{films_filtrado.shape[0]} películas")
 
 # Página Principal
