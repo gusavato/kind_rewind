@@ -145,7 +145,7 @@ def add_dvd(dvd_list:list, logger) -> None:
         dictio_local["folder"] = ''
         dictio_local["add_date"] = datetime.today().date()
         dictio_local["COD_LETTER"] = ''
-        dictio_local["COD_INDEX"] = np.nan
+        dictio_local["COD_INDEX"] = 0
         dictio_local['COD'] = "DVD/B-RAY"
         dictio_local['Vista'] = False
         dictio_local['Storage'] = "Zuzones"
