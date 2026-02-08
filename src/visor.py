@@ -276,6 +276,7 @@ with col_03:
                 <div style='font-size: 18px; '>{select_film['Sinopsis']}</div>
                 """,
                 unsafe_allow_html=True)
+    fila("Ubicación:", select_film['Storage'])
     col_111, col_112, col_113 = st.columns(3, vertical_alignment="center")
     with col_111:
         st.metric("TMDB rate:", f"{select_film['TMDB_rate']}", border=True)
