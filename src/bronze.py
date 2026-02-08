@@ -138,7 +138,7 @@ if films:
     df_bronze = df_bronze[columns]
 
     # Nuevas columnas
-    df_bronze['Storage'] = STORAGE['G']
+    df_bronze['Storage'] = STORAGE['H']
     df_bronze['Vista'] = False
     df_bronze['folder'] = df_bronze['gold_folder'].str.split("\\").str[-1]
     df_bronze.drop(columns=['gold_folder'], inplace=True)
