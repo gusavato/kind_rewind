@@ -108,6 +108,7 @@ def reset_filtros(f_list):
     )
 
     st.session_state.idx = 0
+    st.session_state.sort = 'Añadida'
 
 # Configuración página
 st.set_page_config(layout='wide')
@@ -120,7 +121,7 @@ films['Director_unidecode'] = films.Director.apply(
 actors = pd.read_parquet(ACTORS_PARQUET, engine='pyarrow')
 actors['Nombre_unicode'] = actors.Nombre.apply(lambda x: unidecode(x))
 
-# incialización session_state
+# inicialización session_state
 st.session_state.setdefault(
     'duracion',
     (films.Duracion.min(), films.Duracion.max())
@@ -140,10 +141,23 @@ st.session_state.setdefault('genero', [])
 st.session_state.setdefault('search', "")
 st.session_state.setdefault('search_select', "Titulo")
 st.session_state.setdefault('idx', 0)
+st.session_state.setdefault('sort', 'Añadida')
 
 # Sidebar
 warning_placeholder = st.sidebar.empty()
 box_placeholder = st.sidebar.empty()
+st.sidebar.radio(
+    label = 'Ordenación',
+    horizontal= True,
+    options = ['Añadida', 'Título', 'Año'],
+    key = 'sort',
+    )
+
+sort_dict = {
+    "Añadida" : 'ID',
+    "Título": "Titulo",
+    "Año": 'Year'
+}
 genero_placeholder = st.sidebar.empty()
 
 with genero_placeholder:
@@ -212,7 +226,15 @@ if films_filtrado.empty:
     films_filtrado = films.copy()
     warning_placeholder.write("❌ No hay películas con los filtros seleccionados")
 
-film_list = films_filtrado.sort_values("ID", ascending=False)['Titulo'].to_list()
+sort_value = sort_dict[st.session_state.sort]
+
+if sort_value == 'Titulo':
+    film_list = films_filtrado.sort_values(sort_value, ascending=True)['Titulo'].to_list()
+
+else:
+    film_list = films_filtrado.sort_values(sort_value, ascending=False)['Titulo'].to_list()
+
+st.session_state.box = film_list[0]
 
 # Inicialización de variables de sesión
 # st.session_state.setdefault('idx', 0)
