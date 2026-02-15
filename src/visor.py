@@ -238,10 +238,7 @@ if st.session_state.sort != st.session_state.sort_prev:
 
     st.session_state.sort_prev = st.session_state.sort
 
-if st.session_state.box not in film_list:
-    st.session_state.idx = 0
-    if film_list:
-        st.session_state.box = film_list[0]
+
 
 
 # Inicialización de variables de sesión
@@ -265,7 +262,10 @@ sort_placeholder.radio(
     key = 'sort',
     )
 
-
+if st.session_state.box not in film_list:
+    st.session_state.idx = 0
+    if film_list:
+        st.session_state.box = film_list[0]
 
 
 select_film = films.loc[films.Titulo == select, :].iloc[0].to_dict()
