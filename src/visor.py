@@ -142,22 +142,18 @@ st.session_state.setdefault('search', "")
 st.session_state.setdefault('search_select', "Titulo")
 st.session_state.setdefault('idx', 0)
 st.session_state.setdefault('sort', 'Añadida')
-
-# Sidebar
-warning_placeholder = st.sidebar.empty()
-box_placeholder = st.sidebar.empty()
-st.sidebar.radio(
-    label = 'Ordenación',
-    horizontal= True,
-    options = ['Añadida', 'Título', 'Año'],
-    key = 'sort',
-    )
+st.session_state.setdefault('sort_prev', st.session_state.sort)
 
 sort_dict = {
     "Añadida" : 'ID',
     "Título": "Titulo",
     "Año": 'Year'
 }
+
+# Sidebar
+warning_placeholder = st.sidebar.empty()
+box_placeholder = st.sidebar.empty()
+sort_placeholder = st.sidebar.empty()
 genero_placeholder = st.sidebar.empty()
 
 with genero_placeholder:
@@ -212,7 +208,7 @@ if session_state.search != '':
         ]
     elif  session_state.search_select == 'Director':
         films_filtrado = films_filtrado[
-            (films['Director_unidecode'].apply(lambda x: any(session_state.search.lower() in i for i in x)))
+            (films_filtrado['Director_unidecode'].apply(lambda x: any(session_state.search.lower() in i for i in x)))
         ]
     elif session_state.search_select == 'Reparto':
         id_actor = actors[
@@ -234,7 +230,19 @@ if sort_value == 'Titulo':
 else:
     film_list = films_filtrado.sort_values(sort_value, ascending=False)['Titulo'].to_list()
 
-st.session_state.box = film_list[0]
+# Detectar cambio de ordenación
+if st.session_state.sort != st.session_state.sort_prev:
+    st.session_state.idx = 0
+    if film_list:
+        st.session_state.box = film_list[0]
+
+    st.session_state.sort_prev = st.session_state.sort
+
+if st.session_state.box not in film_list:
+    st.session_state.idx = 0
+    if film_list:
+        st.session_state.box = film_list[0]
+
 
 # Inicialización de variables de sesión
 # st.session_state.setdefault('idx', 0)
@@ -249,6 +257,16 @@ select = box_placeholder.selectbox(
     key='box',
     args=(film_list,)
 )
+
+sort_placeholder.radio(
+    label = 'Ordenación',
+    horizontal= True,
+    options = ['Añadida', 'Título', 'Año'],
+    key = 'sort',
+    )
+
+
+
 
 select_film = films.loc[films.Titulo == select, :].iloc[0].to_dict()
 st.sidebar.button("🎛️ Inicializar filtros", on_click= reset_filtros, args=(films,))
